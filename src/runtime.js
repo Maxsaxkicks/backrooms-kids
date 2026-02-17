@@ -176,8 +176,19 @@ export class Game {
       break;
     }
 
-    // place enemy far enough
-    const en = findRandomFloor(this.grid, this.R);
+    // place enemy: not too far so it shows up during short playtests
+    // (aim: 6〜10 tiles away)
+    let en = null;
+    for (let tries = 0; tries < 8000; tries++) {
+      const cand = findRandomFloor(this.grid, this.R);
+      const cpos = { x: cand.x + 0.5, y: cand.y + 0.5 };
+      const d = dist(cpos, this.player);
+      if (d < 6 || d > 10) continue;
+      en = cand;
+      break;
+    }
+    if (!en) en = findRandomFloor(this.grid, this.R);
+
     this.enemy.x = en.x + 0.5;
     this.enemy.y = en.y + 0.5;
     this.enemy.state = 'wander';
@@ -258,7 +269,7 @@ export class Game {
     }
   }
 
-  canSeePlayer(maxDist = 7.5) {
+  canSeePlayer(maxDist = 12.0) {
     // line of sight ray
     const dx = this.player.x - this.enemy.x;
     const dy = this.player.y - this.enemy.y;
@@ -281,9 +292,11 @@ export class Game {
     if (sees) {
       this.enemy.state = 'chase';
       this.enemy.lastSeen = now;
+      this.ui.status.textContent = 'RUN!';
     } else {
       if (this.enemy.state === 'chase' && (now - this.enemy.lastSeen) > 1.8) {
         this.enemy.state = 'wander';
+        this.ui.status.textContent = this.keys >= 3 ? 'Go to EXIT' : 'Find keys';
       }
     }
 
