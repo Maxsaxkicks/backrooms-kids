@@ -567,50 +567,98 @@ export class Game {
       ctx.translate(sx, sy);
 
       if (e.kind === 'enemy') {
-        // black ghost with stronger aura + white eyes + jitter
+        // humanoid abomination silhouette (bent posture + long arms)
         const time = performance.now();
         const auraPulse = 0.55 + 0.45 * Math.sin(time / 85);
-        const jitter = (Math.sin(time/33) + Math.sin(time/21)) * 0.5;
+        const jitter = (Math.sin(time/33) + Math.sin(time/21)) * 0.8;
 
         ctx.globalAlpha = 0.98;
 
         // aura (draw first)
-        ctx.fillStyle = `rgba(124,92,255,${0.30 * auraPulse})`;
+        ctx.fillStyle = `rgba(124,92,255,${0.28 * auraPulse})`;
         ctx.beginPath();
-        ctx.ellipse(0, 0, size*0.70, size*0.98, 0, 0, Math.PI*2);
+        ctx.ellipse(0, 0, size*0.78, size*1.05, 0, 0, Math.PI*2);
         ctx.fill();
 
         // wisps
         ctx.globalAlpha = 0.35;
-        ctx.strokeStyle = `rgba(124,92,255,${0.55 * auraPulse})`;
-        ctx.lineWidth = Math.max(2, size*0.05);
-        for (let k = 0; k < 6; k++) {
-          const a = (k/6) * Math.PI*2 + time/900;
+        ctx.strokeStyle = `rgba(124,92,255,${0.65 * auraPulse})`;
+        ctx.lineWidth = Math.max(2, size*0.055);
+        for (let k = 0; k < 7; k++) {
+          const a = (k/7) * Math.PI*2 + time/850;
           ctx.beginPath();
-          ctx.moveTo(Math.cos(a)*size*0.15, Math.sin(a)*size*0.10);
-          ctx.lineTo(Math.cos(a)*size*(0.65 + 0.08*Math.sin(time/120 + k)), Math.sin(a)*size*(0.95 + 0.10*Math.cos(time/100 + k)));
+          ctx.moveTo(Math.cos(a)*size*0.12, Math.sin(a)*size*0.10);
+          ctx.lineTo(Math.cos(a)*size*(0.72 + 0.10*Math.sin(time/140 + k)), Math.sin(a)*size*(1.02 + 0.12*Math.cos(time/115 + k)));
           ctx.stroke();
         }
         ctx.globalAlpha = 0.98;
 
-        // body (slight jitter)
+        // creature pose params
+        const bob = Math.sin(time/140) * size*0.04;
+        const lean = -size*0.10;
+        const armSwing = Math.sin(time/95) * size*0.10;
+
+        // limbs (behind)
+        ctx.strokeStyle = 'rgba(0,0,0,0.92)';
+        ctx.lineWidth = Math.max(3, size*0.09);
+        ctx.lineCap = 'round';
+
+        // left arm (long)
+        ctx.beginPath();
+        ctx.moveTo(-size*0.12 + jitter, -size*0.18 + bob);
+        ctx.quadraticCurveTo(-size*0.55 + jitter, size*0.10 + armSwing, -size*0.35 + jitter, size*0.62);
+        ctx.stroke();
+
+        // right arm
+        ctx.beginPath();
+        ctx.moveTo(size*0.12 + jitter, -size*0.18 + bob);
+        ctx.quadraticCurveTo(size*0.55 + jitter, size*0.10 - armSwing, size*0.35 + jitter, size*0.62);
+        ctx.stroke();
+
+        // legs
+        ctx.lineWidth = Math.max(3, size*0.085);
+        ctx.beginPath();
+        ctx.moveTo(-size*0.08 + jitter, size*0.18 + bob);
+        ctx.quadraticCurveTo(-size*0.18 + jitter, size*0.52, -size*0.10 + jitter, size*0.82);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size*0.08 + jitter, size*0.18 + bob);
+        ctx.quadraticCurveTo(size*0.18 + jitter, size*0.52, size*0.10 + jitter, size*0.82);
+        ctx.stroke();
+
+        // torso (bent)
         ctx.fillStyle = e.color;
-        roundedRect(ctx, -size*0.42 + jitter, -size*0.64, size*0.84, size*1.28, size*0.26);
+        ctx.save();
+        ctx.translate(jitter, bob);
+        ctx.rotate(-0.12);
+        roundedRect(ctx, -size*0.18, -size*0.22, size*0.36, size*0.62, size*0.18);
+        ctx.fill();
+        ctx.restore();
+
+        // head
+        ctx.fillStyle = e.color;
+        ctx.beginPath();
+        ctx.ellipse(lean + jitter, -size*0.34 + bob, size*0.20, size*0.24, -0.25, 0, Math.PI*2);
         ctx.fill();
 
         // outline glow
         ctx.strokeStyle = `rgba(124,92,255,${0.95 * auraPulse})`;
-        ctx.lineWidth = Math.max(2, size*0.08);
+        ctx.lineWidth = Math.max(2, size*0.07);
+        ctx.beginPath();
+        ctx.ellipse(lean + jitter, -size*0.34 + bob, size*0.22, size*0.26, -0.25, 0, Math.PI*2);
         ctx.stroke();
 
-        // eyes (bigger)
-        ctx.fillStyle = 'rgba(255,255,255,0.96)';
-        ctx.fillRect(-size*0.23, -size*0.22, size*0.18, size*0.16);
-        ctx.fillRect(size*0.05, -size*0.22, size*0.18, size*0.16);
-        // pupils
+        // eyes (small, uncanny)
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.beginPath();
+        ctx.ellipse(lean - size*0.05 + jitter, -size*0.36 + bob, size*0.035, size*0.030, 0, 0, Math.PI*2);
+        ctx.ellipse(lean + size*0.03 + jitter, -size*0.36 + bob, size*0.035, size*0.030, 0, 0, Math.PI*2);
+        ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,0.85)';
-        ctx.fillRect(-size*0.17, -size*0.16, size*0.08, size*0.08);
-        ctx.fillRect(size*0.11, -size*0.16, size*0.08, size*0.08);
+        ctx.beginPath();
+        ctx.ellipse(lean - size*0.05 + jitter, -size*0.36 + bob, size*0.014, size*0.014, 0, 0, Math.PI*2);
+        ctx.ellipse(lean + size*0.03 + jitter, -size*0.36 + bob, size*0.014, size*0.014, 0, 0, Math.PI*2);
+        ctx.fill();
       } else if (e.kind === 'exit') {
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = e.color;
