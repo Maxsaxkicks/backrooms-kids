@@ -111,7 +111,7 @@ export class Game {
 
     this.grid = [];
 
-    this.player = { x: 1.5, y: 1.5, a: 0, vx: 0, vy: 0, speed: 2.6 };
+    this.player = { x: 1.5, y: 1.5, a: 0, vx: 0, vy: 0, speed: 3.4 };
     this.move = { x: 0, y: 0 };
 
     this.keys = 0;
@@ -238,7 +238,7 @@ export class Game {
   }
 
   tryMove(actor, nx, ny) {
-    const r = 0.18;
+    const r = 0.14;
     // simple circle collision by sampling
     if (!this.isWall(nx + r, ny) && !this.isWall(nx - r, ny) && !this.isWall(nx, ny + r) && !this.isWall(nx, ny - r)) {
       actor.x = nx;
@@ -335,8 +335,8 @@ export class Game {
     const ax = this.move.x;
     const ay = this.move.y;
 
-    // deadzone
-    const dz = 0.12;
+    // deadzone（小さめにして前進しやすく）
+    const dz = 0.06;
     const mx = Math.abs(ax) < dz ? 0 : ax;
     const my = Math.abs(ay) < dz ? 0 : ay;
 
@@ -347,8 +347,10 @@ export class Game {
     const forward = -my;
     const strafe = mx;
 
-    const vx = (ca * forward - sa * strafe) * this.player.speed;
-    const vy = (sa * forward + ca * strafe) * this.player.speed;
+    // stickの効きを少し強める（小さい入力でも進む）
+    const boost = (v) => Math.sign(v) * Math.min(1, Math.abs(v) ** 0.75);
+    const vx = (ca * boost(forward) - sa * boost(strafe)) * this.player.speed;
+    const vy = (sa * boost(forward) + ca * boost(strafe)) * this.player.speed;
 
     const nx = this.player.x + vx * dt;
     const ny = this.player.y + vy * dt;
