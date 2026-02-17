@@ -120,7 +120,8 @@ export class Game {
 
     this.enemy = { x: 2.5, y: 2.5, state: 'wander', a: 0, speed: 1.7, lastSeen: 0 };
 
-    this.fov = Math.PI / 3;
+    // narrower FOV to reduce distortion and feel more claustrophobic
+    this.fov = Math.PI / 4.2;
 
     this.lastT = 0;
 
