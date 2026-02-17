@@ -93,10 +93,11 @@ function dist(a, b) {
 }
 
 export class Game {
-  constructor({ canvas, ui }) {
+  constructor({ canvas, ui, audio }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.ui = ui;
+    this.audio = audio;
 
     this.running = false;
     this.paused = false;
@@ -640,6 +641,15 @@ export class Game {
 
     this.step(dt, t / 1000);
     if (!this.running) return;
+
+    // audio
+    if (this.audio?.enabled) {
+      const moving = Math.hypot(this.move.x, this.move.y);
+      const dd = Math.hypot(this.player.x - this.enemy.x, this.player.y - this.enemy.y);
+      const danger = clamp(1 - dd / 9.0, 0, 1);
+      this.audio.update({ moving, danger });
+    }
+
     this.draw();
     requestAnimationFrame(this.loop);
   }

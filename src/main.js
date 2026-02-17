@@ -1,5 +1,6 @@
 import { makeIcons } from './png.js';
 import { Game } from './runtime.js';
+import { AudioManager } from './audio.js';
 
 const canvas = document.getElementById('game');
 const ui = {
@@ -21,14 +22,18 @@ ui.btnRestart.style.display = 'none';
 // generate icons on first load if missing (noop on GH pages)
 makeIcons().catch(()=>{});
 
-const game = new Game({ canvas, ui });
+const audio = new AudioManager();
+const game = new Game({ canvas, ui, audio });
 
-ui.btnStart.addEventListener('click', () => {
+ui.btnStart.addEventListener('click', async () => {
+  // audio requires a user gesture
+  await audio.start();
   ui.overlay.style.display = 'none';
   game.startNew();
 });
 
-ui.btnRestart.addEventListener('click', () => {
+ui.btnRestart.addEventListener('click', async () => {
+  await audio.start();
   ui.overlay.style.display = 'none';
   game.startNew();
 });
