@@ -364,7 +364,7 @@ export class Game {
 
     // collision with player (a bit larger hitbox to feel stronger)
     const d = Math.hypot(this.player.x - this.enemy.x, this.player.y - this.enemy.y);
-    if (d < 0.48) this.gameOver();
+    if (d < 0.52) this.gameOver();
   }
 
   step(dt, now) {
@@ -565,34 +565,50 @@ export class Game {
       ctx.translate(sx, sy);
 
       if (e.kind === 'enemy') {
-        // black ghost with stronger aura + white eyes
+        // black ghost with stronger aura + white eyes + jitter
+        const time = performance.now();
+        const auraPulse = 0.55 + 0.45 * Math.sin(time / 85);
+        const jitter = (Math.sin(time/33) + Math.sin(time/21)) * 0.5;
+
         ctx.globalAlpha = 0.98;
 
         // aura (draw first)
-        const auraPulse = 0.55 + 0.45 * Math.sin(performance.now() / 90);
-        ctx.fillStyle = `rgba(124,92,255,${0.22 * auraPulse})`;
+        ctx.fillStyle = `rgba(124,92,255,${0.30 * auraPulse})`;
         ctx.beginPath();
-        ctx.ellipse(0, 0, size*0.62, size*0.86, 0, 0, Math.PI*2);
+        ctx.ellipse(0, 0, size*0.70, size*0.98, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // body
+        // wisps
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = `rgba(124,92,255,${0.55 * auraPulse})`;
+        ctx.lineWidth = Math.max(2, size*0.05);
+        for (let k = 0; k < 6; k++) {
+          const a = (k/6) * Math.PI*2 + time/900;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a)*size*0.15, Math.sin(a)*size*0.10);
+          ctx.lineTo(Math.cos(a)*size*(0.65 + 0.08*Math.sin(time/120 + k)), Math.sin(a)*size*(0.95 + 0.10*Math.cos(time/100 + k)));
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.98;
+
+        // body (slight jitter)
         ctx.fillStyle = e.color;
-        roundedRect(ctx, -size*0.40, -size*0.62, size*0.80, size*1.24, size*0.24);
+        roundedRect(ctx, -size*0.42 + jitter, -size*0.64, size*0.84, size*1.28, size*0.26);
         ctx.fill();
 
         // outline glow
-        ctx.strokeStyle = `rgba(124,92,255,${0.75 * auraPulse})`;
-        ctx.lineWidth = Math.max(2, size*0.07);
+        ctx.strokeStyle = `rgba(124,92,255,${0.95 * auraPulse})`;
+        ctx.lineWidth = Math.max(2, size*0.08);
         ctx.stroke();
 
-        // eyes
-        ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.fillRect(-size*0.20, -size*0.20, size*0.16, size*0.14);
-        ctx.fillRect(size*0.04, -size*0.20, size*0.16, size*0.14);
+        // eyes (bigger)
+        ctx.fillStyle = 'rgba(255,255,255,0.96)';
+        ctx.fillRect(-size*0.23, -size*0.22, size*0.18, size*0.16);
+        ctx.fillRect(size*0.05, -size*0.22, size*0.18, size*0.16);
         // pupils
-        ctx.fillStyle = 'rgba(0,0,0,0.80)';
-        ctx.fillRect(-size*0.15, -size*0.15, size*0.07, size*0.07);
-        ctx.fillRect(size*0.09, -size*0.15, size*0.07, size*0.07);
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(-size*0.17, -size*0.16, size*0.08, size*0.08);
+        ctx.fillRect(size*0.11, -size*0.16, size*0.08, size*0.08);
       } else if (e.kind === 'exit') {
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = e.color;
