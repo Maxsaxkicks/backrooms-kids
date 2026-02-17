@@ -238,14 +238,23 @@ export class Game {
   }
 
   canStand(nx, ny) {
-    const r = 0.14;
+    // slightly smaller collision radius to reduce snagging on corners
+    const r = 0.11;
     return (!this.isWall(nx + r, ny) && !this.isWall(nx - r, ny) && !this.isWall(nx, ny + r) && !this.isWall(nx, ny - r));
   }
 
   tryMove(actor, nx, ny) {
-    // axis-separated move so you slide along walls instead of getting stuck
-    if (this.canStand(nx, actor.y)) actor.x = nx;
-    if (this.canStand(actor.x, ny)) actor.y = ny;
+    // axis-separated move so you slide along walls instead of getting stuck.
+    // also sub-step large moves to avoid tunneling into corners.
+    const dx = nx - actor.x;
+    const dy = ny - actor.y;
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 0.08));
+    for (let i = 0; i < steps; i++) {
+      const tx = actor.x + dx / steps;
+      const ty = actor.y + dy / steps;
+      if (this.canStand(tx, actor.y)) actor.x = tx;
+      if (this.canStand(actor.x, ty)) actor.y = ty;
+    }
   }
 
   pickup() {
@@ -499,8 +508,8 @@ export class Game {
       ents.push({ kind: 'exit', x: this.exitPos.x + 0.5, y: this.exitPos.y + 0.5, color: this.keys >= 3 ? '#ffd166' : '#7c5cff' });
     }
 
-    // enemy
-    ents.push({ kind: 'enemy', x: this.enemy.x, y: this.enemy.y, color: '#ff4d6d' });
+    // enemy (black ghost)
+    ents.push({ kind: 'enemy', x: this.enemy.x, y: this.enemy.y, color: '#0a0a0a' });
 
     // sort by distance far->near
     ents.sort((a, b) => (dist2(this.player, b) - dist2(this.player, a)));
@@ -524,13 +533,25 @@ export class Game {
       ctx.translate(sx, sy);
 
       if (e.kind === 'enemy') {
+        // black ghost with faint purple edge + white eyes
+        ctx.globalAlpha = 0.95;
         ctx.fillStyle = e.color;
-        ctx.globalAlpha = 0.92;
-        roundedRect(ctx, -size*0.35, -size*0.55, size*0.7, size*1.1, size*0.18);
+        roundedRect(ctx, -size*0.38, -size*0.58, size*0.76, size*1.16, size*0.22);
         ctx.fill();
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(-size*0.18, -size*0.18, size*0.12, size*0.10);
-        ctx.fillRect(size*0.06, -size*0.18, size*0.12, size*0.10);
+
+        // outline glow
+        ctx.strokeStyle = 'rgba(124,92,255,0.45)';
+        ctx.lineWidth = Math.max(2, size*0.06);
+        ctx.stroke();
+
+        // eyes
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillRect(-size*0.18, -size*0.18, size*0.14, size*0.12);
+        ctx.fillRect(size*0.04, -size*0.18, size*0.14, size*0.12);
+        // pupils
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(-size*0.14, -size*0.14, size*0.06, size*0.06);
+        ctx.fillRect(size*0.08, -size*0.14, size*0.06, size*0.06);
       } else if (e.kind === 'exit') {
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = e.color;
