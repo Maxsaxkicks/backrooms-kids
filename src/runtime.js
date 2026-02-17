@@ -237,13 +237,15 @@ export class Game {
     return this.grid[yi][xi] === 1;
   }
 
-  tryMove(actor, nx, ny) {
+  canStand(nx, ny) {
     const r = 0.14;
-    // simple circle collision by sampling
-    if (!this.isWall(nx + r, ny) && !this.isWall(nx - r, ny) && !this.isWall(nx, ny + r) && !this.isWall(nx, ny - r)) {
-      actor.x = nx;
-      actor.y = ny;
-    }
+    return (!this.isWall(nx + r, ny) && !this.isWall(nx - r, ny) && !this.isWall(nx, ny + r) && !this.isWall(nx, ny - r));
+  }
+
+  tryMove(actor, nx, ny) {
+    // axis-separated move so you slide along walls instead of getting stuck
+    if (this.canStand(nx, actor.y)) actor.x = nx;
+    if (this.canStand(actor.x, ny)) actor.y = ny;
   }
 
   pickup() {
@@ -320,7 +322,7 @@ export class Game {
     const da = wrapAngle(targetA - this.enemy.a);
     this.enemy.a += da * clamp(dt * 4.0, 0, 1);
 
-    const spd = (this.enemy.state === 'chase') ? 2.0 : this.enemy.speed;
+    const spd = (this.enemy.state === 'chase') ? 2.7 : this.enemy.speed;
     const nx = this.enemy.x + Math.cos(this.enemy.a) * spd * dt;
     const ny = this.enemy.y + Math.sin(this.enemy.a) * spd * dt;
     this.tryMove(this.enemy, nx, ny);
@@ -462,10 +464,22 @@ export class Game {
 
     // danger overlay when enemy close
     const dd = Math.hypot(this.player.x - this.enemy.x, this.player.y - this.enemy.y);
-    const danger = clamp(1 - dd / 6, 0, 1);
+    const danger = clamp(1 - dd / 7.5, 0, 1);
     if (danger > 0) {
-      ctx.fillStyle = `rgba(255,77,109,${0.22 * danger})`;
+      // red pulse
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 120);
+      ctx.fillStyle = `rgba(255,77,109,${(0.12 + 0.18 * pulse) * danger})`;
       ctx.fillRect(0, 0, w, h);
+
+      // static noise
+      ctx.globalAlpha = 0.10 * danger;
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 90; i++) {
+        const x = (i * 97 + (performance.now() * 0.6)) % w;
+        const y = (i * 211 + (performance.now() * 0.4)) % h;
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
     }
   }
 
@@ -503,7 +517,7 @@ export class Game {
 
       // project to screen
       const sx = (0.5 + (rel / this.fov)) * w;
-      const size = clamp((h / d) * 0.18, 10, h * 0.35);
+      const size = clamp((h / d) * (e.kind === 'enemy' ? 0.26 : 0.18), 10, h * 0.45);
       const sy = h * 0.5;
 
       ctx.save();
