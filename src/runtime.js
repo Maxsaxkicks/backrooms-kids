@@ -357,14 +357,14 @@ export class Game {
     const da = wrapAngle(targetA - this.enemy.a);
     this.enemy.a += da * clamp(dt * 4.0, 0, 1);
 
-    const spd = (this.enemy.state === 'chase') ? 2.7 : this.enemy.speed;
+    const spd = (this.enemy.state === 'chase') ? 3.2 : this.enemy.speed;
     const nx = this.enemy.x + Math.cos(this.enemy.a) * spd * dt;
     const ny = this.enemy.y + Math.sin(this.enemy.a) * spd * dt;
     this.tryMove(this.enemy, nx, ny);
 
-    // collision with player
+    // collision with player (a bit larger hitbox to feel stronger)
     const d = Math.hypot(this.player.x - this.enemy.x, this.player.y - this.enemy.y);
-    if (d < 0.35) this.gameOver();
+    if (d < 0.48) this.gameOver();
   }
 
   step(dt, now) {
@@ -501,22 +501,26 @@ export class Game {
 
     // danger overlay when enemy close
     const dd = Math.hypot(this.player.x - this.enemy.x, this.player.y - this.enemy.y);
-    const danger = clamp(1 - dd / 7.5, 0, 1);
+    const danger = clamp(1 - dd / 9.0, 0, 1);
     if (danger > 0) {
       // red pulse
-      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 120);
-      ctx.fillStyle = `rgba(255,77,109,${(0.12 + 0.18 * pulse) * danger})`;
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 110);
+      ctx.fillStyle = `rgba(255,77,109,${(0.14 + 0.22 * pulse) * danger})`;
       ctx.fillRect(0, 0, w, h);
 
-      // static noise
-      ctx.globalAlpha = 0.10 * danger;
+      // heavy static noise
+      ctx.globalAlpha = 0.14 * danger;
       ctx.fillStyle = '#ffffff';
-      for (let i = 0; i < 90; i++) {
-        const x = (i * 97 + (performance.now() * 0.6)) % w;
-        const y = (i * 211 + (performance.now() * 0.4)) % h;
+      for (let i = 0; i < 180; i++) {
+        const x = (i * 97 + (performance.now() * 1.1)) % w;
+        const y = (i * 211 + (performance.now() * 0.9)) % h;
         ctx.fillRect(x, y, 2, 2);
       }
       ctx.globalAlpha = 1;
+
+      // vignette tighten
+      ctx.fillStyle = `rgba(0,0,0,${0.20 * danger})`;
+      ctx.fillRect(0, 0, w, h);
     }
   }
 
@@ -554,32 +558,41 @@ export class Game {
 
       // project to screen
       const sx = (0.5 + (rel / this.fov)) * w;
-      const size = clamp((h / d) * (e.kind === 'enemy' ? 0.26 : 0.18), 10, h * 0.45);
+      const size = clamp((h / d) * (e.kind === 'enemy' ? 0.34 : 0.18), 10, h * 0.55);
       const sy = h * 0.5;
 
       ctx.save();
       ctx.translate(sx, sy);
 
       if (e.kind === 'enemy') {
-        // black ghost with faint purple edge + white eyes
-        ctx.globalAlpha = 0.95;
+        // black ghost with stronger aura + white eyes
+        ctx.globalAlpha = 0.98;
+
+        // aura (draw first)
+        const auraPulse = 0.55 + 0.45 * Math.sin(performance.now() / 90);
+        ctx.fillStyle = `rgba(124,92,255,${0.22 * auraPulse})`;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size*0.62, size*0.86, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // body
         ctx.fillStyle = e.color;
-        roundedRect(ctx, -size*0.38, -size*0.58, size*0.76, size*1.16, size*0.22);
+        roundedRect(ctx, -size*0.40, -size*0.62, size*0.80, size*1.24, size*0.24);
         ctx.fill();
 
         // outline glow
-        ctx.strokeStyle = 'rgba(124,92,255,0.45)';
-        ctx.lineWidth = Math.max(2, size*0.06);
+        ctx.strokeStyle = `rgba(124,92,255,${0.75 * auraPulse})`;
+        ctx.lineWidth = Math.max(2, size*0.07);
         ctx.stroke();
 
         // eyes
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
-        ctx.fillRect(-size*0.18, -size*0.18, size*0.14, size*0.12);
-        ctx.fillRect(size*0.04, -size*0.18, size*0.14, size*0.12);
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillRect(-size*0.20, -size*0.20, size*0.16, size*0.14);
+        ctx.fillRect(size*0.04, -size*0.20, size*0.16, size*0.14);
         // pupils
-        ctx.fillStyle = 'rgba(0,0,0,0.75)';
-        ctx.fillRect(-size*0.14, -size*0.14, size*0.06, size*0.06);
-        ctx.fillRect(size*0.08, -size*0.14, size*0.06, size*0.06);
+        ctx.fillStyle = 'rgba(0,0,0,0.80)';
+        ctx.fillRect(-size*0.15, -size*0.15, size*0.07, size*0.07);
+        ctx.fillRect(size*0.09, -size*0.15, size*0.07, size*0.07);
       } else if (e.kind === 'exit') {
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = e.color;
