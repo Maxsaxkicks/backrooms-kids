@@ -432,7 +432,7 @@ export class Game {
     ctx.fillStyle = '#0b1020';
     ctx.fillRect(0, h * 0.5, w, h * 0.5);
 
-    const numRays = Math.floor(w / 2); // fast
+    const numRays = Math.floor(w * 0.75); // smoother / less distortion
     const halfH = h * 0.5;
 
     // wall color
@@ -441,7 +441,9 @@ export class Game {
       const angle = this.player.a + Math.atan(camX * Math.tan(this.fov / 2));
       const r = this.raycast(angle);
 
-      const dist = Math.max(0.0001, r.dist);
+      // fish-eye correction so walls don't look warped
+      const corrected = r.dist * Math.cos(angle - this.player.a);
+      const dist = Math.max(0.0001, corrected);
       const lineH = Math.min(h, (h / dist));
       const start = Math.floor(halfH - lineH / 2);
       const end = Math.floor(halfH + lineH / 2);
