@@ -243,15 +243,41 @@ export class Game {
     return (!this.isWall(nx + r, ny) && !this.isWall(nx - r, ny) && !this.isWall(nx, ny + r) && !this.isWall(nx, ny - r));
   }
 
+  cornerNudge(actor, dx, dy) {
+    // If we're moving diagonally into a corner, gently "nudge" along the open axis.
+    // This reduces corner-sticking in 1-tile corridors.
+    const wantX = actor.x + dx;
+    const wantY = actor.y + dy;
+    if (this.canStand(wantX, wantY)) return { dx, dy };
+
+    // try slide X only
+    if (this.canStand(wantX, actor.y)) return { dx, dy: 0 };
+    // try slide Y only
+    if (this.canStand(actor.x, wantY)) return { dx: 0, dy };
+
+    // try small nudges
+    const n = 0.06;
+    if (Math.abs(dx) > 1e-6 && this.canStand(actor.x, actor.y + Math.sign(dy) * n)) return { dx, dy: Math.sign(dy) * n };
+    if (Math.abs(dy) > 1e-6 && this.canStand(actor.x + Math.sign(dx) * n, actor.y)) return { dx: Math.sign(dx) * n, dy };
+
+    return { dx: 0, dy: 0 };
+  }
+
   tryMove(actor, nx, ny) {
     // axis-separated move so you slide along walls instead of getting stuck.
     // also sub-step large moves to avoid tunneling into corners.
-    const dx = nx - actor.x;
-    const dy = ny - actor.y;
+    let dx = nx - actor.x;
+    let dy = ny - actor.y;
+
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 0.08));
     for (let i = 0; i < steps; i++) {
-      const tx = actor.x + dx / steps;
-      const ty = actor.y + dy / steps;
+      const stepDx = dx / steps;
+      const stepDy = dy / steps;
+
+      const nudged = this.cornerNudge(actor, stepDx, stepDy);
+      const tx = actor.x + nudged.dx;
+      const ty = actor.y + nudged.dy;
+
       if (this.canStand(tx, actor.y)) actor.x = tx;
       if (this.canStand(actor.x, ty)) actor.y = ty;
     }
