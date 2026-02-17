@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon-192.png" />
+  <title>Backrooms Kids</title>
+  <style>
+    :root { --bg:#0b1020; --fg:#e7f0ff; --accent:#7c5cff; --danger:#ff4d6d; --good:#2ee59d; }
+    html, body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:-apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial; }
+    #wrap { height:100%; display:flex; flex-direction:column; }
+    header { padding:10px 14px; display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .pill { background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+    button { appearance:none; border:0; padding:10px 14px; border-radius:12px; font-weight:900; cursor:pointer; background:var(--accent); color:white; }
+    button.secondary { background: rgba(255,255,255,0.10); }
+    main { flex:1; display:flex; position:relative; overflow:hidden; }
+    canvas { width:100%; height:100%; touch-action:none; }
+
+    #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.55); padding:20px; }
+    #card { width:min(620px, 92vw); background: rgba(11,16,32,0.95); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:18px; box-shadow: 0 16px 50px rgba(0,0,0,0.45); }
+    #card h1 { margin:0 0 8px; font-size:22px; }
+    #card p { margin:0 0 14px; opacity:0.92; line-height:1.45; }
+    #card .row { display:flex; gap:10px; flex-wrap:wrap; }
+    #hint { opacity:0.75; font-size:12px; margin-top:10px; }
+
+    /* Joystick */
+    #stick { position:absolute; left:14px; bottom:16px; width:170px; height:170px; border-radius:18px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); z-index:10; touch-action:none; }
+    #knob { position:absolute; left:50%; top:50%; width:74px; height:74px; margin-left:-37px; margin-top:-37px; border-radius:999px; background: rgba(124,92,255,0.35); border:1px solid rgba(255,255,255,0.18); }
+
+    /* HUD */
+    #hud { position:absolute; right:14px; bottom:16px; z-index:10; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    #hud .pill { font-size: 12px; }
+
+    /* vignette */
+    #vignette { position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); mix-blend-mode:multiply; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <header>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div class="pill">🟨 Backrooms Kids</div>
+        <div class="pill">Keys: <span id="keys">0</span>/3</div>
+        <div class="pill">Status: <span id="status">Find keys</span></div>
+      </div>
+      <div>
+        <button id="btnPause" class="secondary">Pause</button>
+      </div>
+    </header>
+    <main>
+      <canvas id="game"></canvas>
+      <div id="stick"><div id="knob"></div></div>
+      <div id="hud">
+        <div class="pill">右側をスワイプで視点</div>
+        <div class="pill">鍵を3つ拾って出口へ</div>
+      </div>
+      <div id="vignette"></div>
+    </main>
+  </div>
+
+  <div id="overlay">
+    <div id="card">
+      <h1 id="title">Backrooms Kids</h1>
+      <p id="desc">左下スティックで移動。右側をスワイプで視点を回す。鍵を3つ拾って出口を開けよう。敵に触れたらゲームオーバー。</p>
+      <div class="row">
+        <button id="btnStart">Start</button>
+        <button id="btnRestart" class="secondary" style="display:none">Retry</button>
+      </div>
+      <div id="hint">Safariで「共有→ホーム画面に追加」でアプリっぽく遊べます</div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
